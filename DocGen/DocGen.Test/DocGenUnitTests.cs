@@ -18,42 +18,40 @@ namespace DocGen.Test
             await VerifyCS.VerifyAnalyzerAsync(test);
         }
 
-        //Diagnostic and CodeFix both triggered and checked for
         [TestMethod]
-        public async Task TestMethod2()
+        public async Task TestAnalyze()
         {
             var test = @"
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Text;
-    using System.Threading.Tasks;
-    using System.Diagnostics;
-
-    namespace ConsoleApplication1
+public class {|#0:TypeName|}
+{
+    public static void Test()
     {
-        class {|#0:TypeName|}
-        {   
+    }
+}";
+            var expected = VerifyCS.Diagnostic("DocGenAnalyzer").WithLocation(0).WithArguments("TypeName");
+            await VerifyCS.VerifyAnalyzerAsync(test, expected);
         }
-    }";
 
-            var fixtest = @"
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Text;
-    using System.Threading.Tasks;
-    using System.Diagnostics;
-
-    namespace ConsoleApplication1
+        [TestMethod]
+        public async Task TestFix()
+        {
+            var test = @"public class TypeName
+{
+    public static void Test()
     {
-        class TYPENAME
-        {   
-        }
-    }";
+    }
+}";
 
-            var expected = VerifyCS.Diagnostic("DocGen").WithLocation(0).WithArguments("TypeName");
-            await VerifyCS.VerifyCodeFixAsync(test, expected, fixtest);
+            var fixtest = @"/// <summary>
+/// Type Name
+/// </summary>
+public class TypeName
+{
+    public static void Test()
+    {
+    }
+}";
+            await VerifyCS.VerifyCodeFixAsync(test, fixtest);
         }
     }
 }

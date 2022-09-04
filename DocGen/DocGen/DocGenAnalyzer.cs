@@ -1,54 +1,80 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.Immutable;
+﻿using System.Collections.Immutable;
 using System.Linq;
-using System.Threading;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 
-namespace DocGen
+namespace DocGen;
+
+[DiagnosticAnalyzer(LanguageNames.CSharp)]
+public class DocGenAnalyzer : DiagnosticAnalyzer
 {
-    [DiagnosticAnalyzer(LanguageNames.CSharp)]
-    public class DocGenAnalyzer : DiagnosticAnalyzer
+    public const string MethodDiagnosticId = "DK001";
+    private const string Category = "Naming";
+    private const string Title = "Missing member documentation";
+    private const string MessageFormat = "Member '{0}' doesn't have a documentation";
+    private const string Description = "Public member must have a documentation";
+
+    private static readonly DiagnosticDescriptor DiagnosticRule = new DiagnosticDescriptor(
+        MethodDiagnosticId, Title, MessageFormat,
+        Category, DiagnosticSeverity.Error, true, Description);
+
+    public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(DiagnosticRule);
+
+    public override void Initialize(AnalysisContext context)
     {
-        public const string DiagnosticId = "DocGen";
+        context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
+        context.EnableConcurrentExecution();
 
-        // You can change these strings in the Resources.resx file. If you do not want your analyzer to be localize-able, you can use regular strings for Title and MessageFormat.
-        // See https://github.com/dotnet/roslyn/blob/main/docs/analyzers/Localizing%20Analyzers.md for more on localization
-        private static readonly LocalizableString Title = new LocalizableResourceString(nameof(Resources.AnalyzerTitle), Resources.ResourceManager, typeof(Resources));
-        private static readonly LocalizableString MessageFormat = new LocalizableResourceString(nameof(Resources.AnalyzerMessageFormat), Resources.ResourceManager, typeof(Resources));
-        private static readonly LocalizableString Description = new LocalizableResourceString(nameof(Resources.AnalyzerDescription), Resources.ResourceManager, typeof(Resources));
-        private const string Category = "Naming";
+        context.RegisterSymbolAction(AnalyzeClass, SymbolKind.NamedType);
+        context.RegisterSymbolAction(AnalyzeProperty, SymbolKind.Property);
+        context.RegisterSymbolAction(AnalyzeMethod, SymbolKind.Method);
+    }
 
-        private static readonly DiagnosticDescriptor Rule = new DiagnosticDescriptor(DiagnosticId, Title, MessageFormat, Category, DiagnosticSeverity.Warning, isEnabledByDefault: true, description: Description);
+    private static void AnalyzeClass(SymbolAnalysisContext context)
+    {
+        //Debugger.Launch();
 
-        public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get { return ImmutableArray.Create(Rule); } }
-
-        public override void Initialize(AnalysisContext context)
+        if (IsControllerType((INamedTypeSymbol)context.Symbol))
         {
-            context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
-            context.EnableConcurrentExecution();
-
-            // TODO: Consider registering other actions that act on syntax instead of or in addition to symbols
-            // See https://github.com/dotnet/roslyn/blob/main/docs/analyzers/Analyzer%20Actions%20Semantics.md for more information
-            context.RegisterSymbolAction(AnalyzeSymbol, SymbolKind.NamedType);
+            ReportMissingDocumentationForPublicSymbol(context);
         }
+    }
 
-        private static void AnalyzeSymbol(SymbolAnalysisContext context)
+    private static void AnalyzeProperty(SymbolAnalysisContext context)
+    {
+        //Debugger.Launch();
+
+        if (IsControllerType(context.Symbol.ContainingType))
         {
-            // TODO: Replace the following code with your own analysis, generating Diagnostic objects for any issues you find
-            var namedTypeSymbol = (INamedTypeSymbol)context.Symbol;
+            ReportMissingDocumentationForPublicSymbol(context);
+        }
+    }
 
-            // Find just those named type symbols with names containing lowercase letters.
-            if (namedTypeSymbol.Name.ToCharArray().Any(char.IsLower))
-            {
-                // For all such symbols, produce a diagnostic.
-                var diagnostic = Diagnostic.Create(Rule, namedTypeSymbol.Locations[0], namedTypeSymbol.Name);
+    private static void AnalyzeMethod(SymbolAnalysisContext context)
+    {
+        //Debugger.Launch();
 
-                context.ReportDiagnostic(diagnostic);
-            }
+        if (IsControllerType(context.Symbol.ContainingType)
+            && context.Symbol is IMethodSymbol method
+            && method.MethodKind == MethodKind.Ordinary)
+        {
+            ReportMissingDocumentationForPublicSymbol(context);
+        }
+    }
+
+    private static bool IsControllerType(INamedTypeSymbol typeSymbol)
+    {
+        return typeSymbol.BaseType.Name == "ControllerBase"
+           || typeSymbol.GetAttributes().Any(q => q.GetType().Name == "ApiControllerAttribute");
+    }
+
+    private static void ReportMissingDocumentationForPublicSymbol(SymbolAnalysisContext context)
+    {
+        if (context.Symbol.DeclaredAccessibility == Accessibility.Public
+            && string.IsNullOrWhiteSpace(context.Symbol.GetDocumentationCommentXml()))
+        {
+            var diagnostic = Diagnostic.Create(DiagnosticRule, context.Symbol.Locations.FirstOrDefault(), context.Symbol.Name);
+            context.ReportDiagnostic(diagnostic);
         }
     }
 }
