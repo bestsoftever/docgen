@@ -10,16 +10,13 @@
   <PropertyGroup>
     <PackageId>DocGen</PackageId>
     <PackageVersion>1.0.0.0</PackageVersion>
-    <Authors>Dawid</Authors>
-    <PackageLicenseUrl>http://LICENSE_URL_HERE_OR_DELETE_THIS_LINE</PackageLicenseUrl>
-    <PackageProjectUrl>http://PROJECT_URL_HERE_OR_DELETE_THIS_LINE</PackageProjectUrl>
-    <PackageIconUrl>http://ICON_URL_HERE_OR_DELETE_THIS_LINE</PackageIconUrl>
-    <RepositoryUrl>http://REPOSITORY_URL_HERE_OR_DELETE_THIS_LINE</RepositoryUrl>
+    <Authors>bestsoftever</Authors>
+    <RepositoryUrl>https://github.com/bestsoftever/docgen</RepositoryUrl>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <Description>DocGen</Description>
-    <PackageReleaseNotes>Summary of changes made in this release of the package.</PackageReleaseNotes>
+    <PackageReleaseNotes>First working version.</PackageReleaseNotes>
     <Copyright>Copyright</Copyright>
-    <PackageTags>DocGen, analyzers</PackageTags>
+    <PackageTags>DocGen, analyzers, documentation</PackageTags>
     <DevelopmentDependency>true</DevelopmentDependency>
     <NoPackageAnalysis>true</NoPackageAnalysis>
 
