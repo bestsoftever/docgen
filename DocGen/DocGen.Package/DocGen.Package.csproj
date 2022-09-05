@@ -9,7 +9,7 @@
 
   <PropertyGroup>
     <PackageId>DocGen</PackageId>
-    <PackageVersion>1.0.0.0</PackageVersion>
+    <PackageVersion>1.0.0.1</PackageVersion>
     <Authors>bestsoftever</Authors>
     <RepositoryUrl>https://github.com/bestsoftever/docgen</RepositoryUrl>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
